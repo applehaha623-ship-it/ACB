@@ -1,0 +1,69 @@
+-- =============================================
+-- Script Name: 67
+-- Description: Infinite Money, No Cooldown, Godmode
+-- =============================================
+
+local Players = game:GetService("Players")
+
+-- ฟังก์ชันเมื่อผู้เล่นเข้าเกม
+local function onPlayerAdded(player)
+	
+	------------------------------------------------
+	-- 1. ฟังก์ชัน: เงินไม่จำกัด (Infinite Money)
+	------------------------------------------------
+	-- สร้างโฟลเดอร์ leaderstats สำหรับแสดงผลเงินในเกม
+	local leaderstats = player:FindFirstChild("leaderstats") or Instance.new("Folder")
+	leaderstats.Name = "leaderstats"
+	leaderstats.Parent = player
+
+	local money = leaderstats:FindFirstChild("Money") or Instance.new("NumberValue")
+	money.Name = "Money"
+	money.Value = math.huge -- กำหนดค่าเป็นอนันต์ (Infinity)
+	money.Parent = leaderstats
+
+	-- ป้องกันไม่ให้เงินลดลงเมื่อมีการใช้จ่าย
+	money.Changed:Connect(function(newValue)
+		if newValue < math.huge then
+			money.Value = math.huge
+		end
+	end)
+
+	------------------------------------------------
+	-- 2. ฟังก์ชัน: ตัวละครไม่ตาย (Godmode) & 3. ไม่มีคูลดาวน์ (No Cooldown)
+	------------------------------------------------
+	player.CharacterAdded:Connect(function(character)
+		local humanoid = character:WaitForChild("Humanoid")
+
+		-- ระบบตัวละครไม่ตาย (Godmode)
+		humanoid.MaxHealth = math.huge
+		humanoid.Health = math.huge
+
+		-- ล็อคเลือดไม่ให้ลดลงเมื่อโดนโจมตี
+		humanoid.HealthChanged:Connect(function(health)
+			if health < math.huge then
+				humanoid.Health = math.huge
+			end
+		end)
+
+		-- ระบบไม่มีคูลดาวน์สำหรับเครื่องมือ (No Tool Cooldown)
+		character.ChildAdded:Connect(function(child)
+			if child:IsA("Tool") then
+				-- ปรับค่าประเภทคูลดาวน์พื้นฐานของ Tool
+				if child:FindFirstChild("Cooldown") then
+					child.Cooldown.Value = 0
+				end
+				if child:FindFirstChild("Enabled") then
+					child.Enabled = true
+				end
+			end
+		end)
+	end)
+end
+
+-- เชื่อมต่อระบบเมื่อผู้เล่นเข้าเกม
+Players.PlayerAdded:Connect(onPlayerAdded)
+
+-- สำหรับผู้เล่นที่อยู่ในเกมอยู่แล้วขณะสคริปต์เริ่มทำงาน
+for _, player in ipairs(Players:GetPlayers()) do
+	task.spawn(onPlayerAdded, player)
+end
